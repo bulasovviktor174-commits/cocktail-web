@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cocktail Web</title>
+  <style>
+    :root {
+      --bg-dark: #090a10;
+      --glass-bg: rgba(20, 24, 38, 0.65);
+      --cyan-glow: #00f2fe;
+      --purple-glow: #a100ff;
+      --spring-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg-dark); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .ambient-orbs { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(95px); opacity: 0.55; }
+    .orb-1 { width: 420px; height: 420px; background: var(--purple-glow); top: -120px; left: -100px; }
+    .orb-2 { width: 480px; height: 480px; background: var(--cyan-glow); bottom: -150px; right: -100px; }
+
+    .browser-chrome {
+      position: relative; z-index: 10; background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .tabs-bar { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+    .tab {
+      display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px; cursor: pointer; max-width: 160px;
+    }
+    .tab.active {
+      background: rgba(255, 255, 255, 0.14); border-color: var(--cyan-glow);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+    }
+    .tab-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .close-tab { opacity: 0.6; font-size: 14px; padding: 0 4px; }
+    .new-tab-btn, .nav-btn {
+      background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff; border-radius: 11px; cursor: pointer; display: grid; place-items: center; flex-shrink: 0;
+    }
+    .new-tab-btn { width: 30px; height: 30px; font-size: 18px; }
+    .nav-btn { width: 36px; height: 36px; font-size: 16px; }
+    .nav-bar { display: flex; align-items: center; gap: 8px; }
+    .omnibox-wrapper {
+      flex: 1; border-radius: 14px; padding: 1.5px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    }
+    .omnibox-wrapper:focus-within {
+      background: linear-gradient(90deg, var(--cyan-glow), var(--purple-glow));
+    }
+    .omnibox {
+      width: 100%; background: rgba(12, 15, 24, 0.9); border: none; outline: none;
+      color: #fff; padding: 9px 14px; border-radius: 12.5px; font-size: 14px;
+    }
+    .viewport { position: relative; z-index: 5; flex: 1; display: flex; flex-direction: column; }
+    iframe { width: 100%; height: 100%; border: none; background: #fff; display: none; }
+    .start-page {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+    }
+    .logo-title {
+      font-size: 38px; font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan-glow) 70%, var(--purple-glow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px;
+    }
+    .logo-sub { color: rgba(255, 255, 255, 0.6); font-size: 13px; margin-bottom: 28px; }
+    .bookmarks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; width: 100%; max-width: 360px; }
+    .bookmark-card {
+      background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;
+    }
+    .bookmark-icon {
+      width: 42px; height: 42px; border-radius: 13px;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(161, 0, 255, 0.2));
+      border: 1px solid rgba(255, 255, 255, 0.15); display: grid; place-items: center; font-weight: bold; color: var(--cyan-glow);
+    }
+    .bookmark-name { font-size: 13px; color: rgba(255, 255, 255, 0.9); }
+  </style>
+</head>
+<body>
+  <div class="ambient-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+  <header class="browser-chrome">
+    <div class="tabs-bar" id="tabsBar"><button class="new-tab-btn" id="newTabBtn">+</button></div>
+    <div class="nav-bar">
+      <button class="nav-btn" id="homeBtn">⌂</button>
+      <button class="nav-btn" id="reloadBtn">↻</button>
+      <div class="omnibox-wrapper"><input type="text" class="omnibox" id="urlInput" placeholder="Поиск или адрес сайта..."></div>
+    </div>
+  </header>
+  <main class="viewport">
+    <div class="start-page" id="startPage">
+      <h1 class="logo-title">Cocktail Web</h1>
+      <p class="logo-sub">Kirin Glow • Встроенный обозреватель</p>
+      <div class="bookmarks-grid">
+        <div class="bookmark-card" onclick="navigate('https://wikipedia.org')"><div class="bookmark-icon">W</div><span class="bookmark-name">Википедия</span></div>
+        <div class="bookmark-card" onclick="navigate('https://trashbox.ru')"><div class="bookmark-icon">TB</div><span class="bookmark-name">Trashbox</span></div>
+        <div class="bookmark-card" onclick="navigate('https://ya.ru')"><div class="bookmark-icon">C</div><span class="bookmark-name">Cocktail Поиск</span></div>
+        <div class="bookmark-card" onclick="navigate('https://habr.com')"><div class="bookmark-icon">H</div><span class="bookmark-name">Хабр</span></div>
+      </div>
+    </div>
+    <iframe id="webFrame"></iframe>
+  </main>
+  <script>
+    let tabs = [{ id: 1, title: 'Новая вкладка', url: '', display: '' }];
+    let activeTabId = 1, nextTabId = 2;
+    const tabsBar = document.getElementById('tabsBar'), newTabBtn = document.getElementById('newTabBtn');
+    const urlInput = document.getElementById('urlInput'), startPage = document.getElementById('startPage'), webFrame = document.getElementById('webFrame');
+
+    function renderTabs() {
+      document.querySelectorAll('.tab').forEach(el => el.remove());
+      tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = `tab ${tab.id === activeTabId ? 'active' : ''}`;
+        tabEl.innerHTML = `<span class="tab-title">${tab.title}</span>${tabs.length > 1 ? `<span class="close-tab" onclick="closeTab(event, ${tab.id})">×</span>` : ''}`;
+        tabEl.onclick = () => switchTab(tab.id);
+        tabsBar.insertBefore(tabEl, newTabBtn);
+      });
+    }
+
+    function switchTab(id) {
+      activeTabId = id;
+      const current = tabs.find(t => t.id === id);
+      urlInput.value = current.display || current.url;
+      if (current.url) {
+        startPage.style.display = 'none';
+        webFrame.style.display = 'block';
+        webFrame.src = '/proxy?url=' + encodeURIComponent(current.url);
+      } else {
+        webFrame.style.display = 'none';
+        webFrame.src = '';
+        startPage.style.display = 'flex';
+      }
+      renderTabs();
+    }
+
+    function closeTab(e, id) {
+      e.stopPropagation();
+      tabs = tabs.filter(t => t.id !== id);
+      if (activeTabId === id) switchTab(tabs[tabs.length - 1].id);
+      else renderTabs();
+    }
+
+    newTabBtn.onclick = () => {
+      const newTab = { id: nextTabId++, title: 'Новая вкладка', url: '', display: '' };
+      tabs.push(newTab);
+      switchTab(newTab.id);
+    };
+
+    function navigate(rawInput) {
+      let query = rawInput.trim();
+      if (!query) return;
+      let targetUrl = '';
+      if (query.startsWith('http://') || query.startsWith('https://')) targetUrl = query;
+      else if (query.includes('.') && !query.includes(' ')) targetUrl = 'https://' + query;
+      else targetUrl = 'https://ya.ru' + encodeURIComponent(query);
+
+      const current = tabs.find(t => t.id === activeTabId);
+      current.url = targetUrl;
+      current.display = query;
+      current.title = query.replace(/^https?:\/\//, '').split('/')[0];
+      switchTab(activeTabId);
+    }
+
+    urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') navigate(urlInput.value); });
+    document.getElementById('homeBtn').onclick = () => {
+      const current = tabs.find(t => t.id === activeTabId);
+      current.url = ''; current.display = ''; current.title = 'Новая вкладка'; switchTab(activeTabId);
+    };
+    document.getElementById('reloadBtn').onclick = () => { if (webFrame.style.display === 'block') webFrame.src = webFrame.src; };
+    renderTabs();
+  </script>
+</body>
+</html>
